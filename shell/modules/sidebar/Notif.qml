@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../common/Sanitizer.js" as Sanitizer
 import QtQuick
 import QtQuick.Layouts
 import Caelestia.Config
@@ -61,7 +62,7 @@ StyledRect {
         anchors.left: parent.left
 
         width: parent.width
-        text: root.modelData?.summaryPlain ?? ""
+        text: root.modelData?.summary ?? ""
         color: root.modelData?.urgency === "critical" ? Colours.palette.m3onSecondaryContainer : Colours.palette.m3onSurface
         elide: Text.ElideRight
         wrapMode: Text.WordWrap
@@ -75,7 +76,7 @@ StyledRect {
         anchors.left: parent.left
 
         visible: false
-        text: root.modelData?.summaryPlain ?? ""
+        text: root.modelData?.summary ?? ""
     }
 
     WrappedLoader {
@@ -88,7 +89,7 @@ StyledRect {
         anchors.leftMargin: Tokens.spacing.small
 
         sourceComponent: StyledText {
-            text: String(root.modelData?.bodyPlain ?? "").replace(/\n+/g, " ")
+            text: Sanitizer.cleanPreview(root.modelData?.body)
             color: root.modelData?.urgency === "critical" ? Colours.palette.m3secondary : Colours.palette.m3outline
             elide: Text.ElideRight
         }
@@ -134,15 +135,14 @@ StyledRect {
             id: bodyText
 
             Layout.fillWidth: true
-            textFormat: Text.MarkdownText
-            text: String(root.modelData?.body ?? "").replace(/(.)\n(?!\n)/g, "$1\n\n") || qsTr("No body here! :/")
+            textFormat: Text.StyledText
+            text: Sanitizer.cleanNotificationBody(root.modelData?.body) || qsTr("No body here! :/")
             color: root.modelData?.urgency === "critical" ? Colours.palette.m3secondary : Colours.palette.m3outline
-            wrapMode: Text.WordWrap
+            wrapMode: Text.WrapAtWordBoundaryOrAnywhere
 
             onLinkActivated: link => {
                 Qt.openUrlExternally(link);
-                if (!Visibilities.sidebarPinned)
-                    root.visibilities.sidebar = false;
+                root.visibilities.sidebar = false;
             }
         }
 
