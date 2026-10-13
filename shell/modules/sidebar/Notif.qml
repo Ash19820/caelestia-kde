@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 
-import "../common/Sanitizer.js" as Sanitizer
 import QtQuick
 import QtQuick.Layouts
 import Caelestia.Config
@@ -62,7 +61,7 @@ StyledRect {
         anchors.left: parent.left
 
         width: parent.width
-        text: root.modelData?.summary ?? ""
+        text: root.modelData?.summaryPlain ?? ""
         color: root.modelData?.urgency === "critical" ? Colours.palette.m3onSecondaryContainer : Colours.palette.m3onSurface
         elide: Text.ElideRight
         wrapMode: Text.WordWrap
@@ -76,7 +75,7 @@ StyledRect {
         anchors.left: parent.left
 
         visible: false
-        text: root.modelData?.summary ?? ""
+        text: root.modelData?.summaryPlain ?? ""
     }
 
     WrappedLoader {
@@ -89,7 +88,7 @@ StyledRect {
         anchors.leftMargin: Tokens.spacing.small
 
         sourceComponent: StyledText {
-            text: Sanitizer.cleanPreview(root.modelData?.body)
+            text: root.modelData?.bodyPlain ?? ""
             color: root.modelData?.urgency === "critical" ? Colours.palette.m3secondary : Colours.palette.m3outline
             elide: Text.ElideRight
         }
@@ -136,13 +135,14 @@ StyledRect {
 
             Layout.fillWidth: true
             textFormat: Text.StyledText
-            text: Sanitizer.cleanNotificationBody(root.modelData?.body) || qsTr("No body here! :/")
+            text: root.modelData?.bodyStyled || qsTr("No body here! :/")
             color: root.modelData?.urgency === "critical" ? Colours.palette.m3secondary : Colours.palette.m3outline
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
 
             onLinkActivated: link => {
                 Qt.openUrlExternally(link);
-                root.visibilities.sidebar = false;
+                if (!Visibilities.sidebarPinned)
+                    root.visibilities.sidebar = false;
             }
         }
 

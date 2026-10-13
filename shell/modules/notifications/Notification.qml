@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 
-import "../common/Sanitizer.js" as Sanitizer
 import QtQuick
 import QtQuick.Shapes
 import Quickshell
@@ -19,9 +18,6 @@ StyledRect {
     required property NotifData modelData
     readonly property bool hasImage: modelData.image.length > 0
     readonly property bool hasAppIcon: modelData.appIcon.length > 0
-    readonly property int bodyTextFormat: /(<[a-zA-Z\/][^>]*>|&lt;br)/i.test(modelData.body)
-    ? Text.StyledText
-    : (/[*_`#\[\]]/.test(modelData.body) ? Text.MarkdownText : Text.PlainText)
     readonly property int nonAnimHeight: summary.implicitHeight + (root.expanded ? Tokens.spacing.extraSmall * 2 + appName.height + body.height + actions.height + actions.anchors.topMargin : bodyPreview.height) + inner.anchors.margins * 2
     property bool expanded: Config.notifs.openExpanded
 
@@ -181,7 +177,7 @@ StyledRect {
                         anchors.verticalCenterOffset: Centering.pixelAlign(parent.height, height)
 
                         sourceComponent: MaterialIcon {
-                            text: Icons.getNotifIcon(root.modelData.summary, root.modelData.urgency)
+                            text: root.modelData.materialIcon || Icons.getNotifIcon(root.modelData.summary, root.modelData.urgency)
                             color: root.modelData.urgency === NotificationUrgency.Critical ? Colours.palette.m3onError : root.modelData.urgency === NotificationUrgency.Low ? Colours.palette.m3onSurface : Colours.palette.m3onSecondaryContainer
                             fontStyle: Tokens.font.icon.medium
                         }
@@ -304,7 +300,7 @@ StyledRect {
             TextMetrics {
                 id: summaryMetrics
 
-                text: root.modelData.summary
+                text: root.modelData.summaryPlain
                 font: summary.font
                 elide: Text.ElideRight
                 elideWidth: expandBtn.x - time.width - timeSep.width - summary.x - root.Tokens.spacing.small * 3
@@ -394,21 +390,10 @@ StyledRect {
                 anchors.rightMargin: Tokens.spacing.small
 
                 animate: true
+                text: root.modelData.bodyPlain
                 textFormat: Text.PlainText
-		text: Sanitizer.cleanPreview(root.modelData.body)
-			.replace(/&lt;br\s*\/?&gt;|<br\s*\/?>/gi, " ")
-		        .replace(/<[^>]*>/g, " ")
-		        .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-		        .replace(/[*`~]/g, "")
-		        .replace(/&quot;/g, '"')
-		        .replace(/&apos;|&#39;/g, "'")
-		        .replace(/&lt;/g, "<")
-		        .replace(/&gt;/g, ">")
-		        .replace(/&amp;/g, "&")
-			.replace(/\s+/g, " ")
-		        .trim()
-		elide: Text.ElideRight
-		maximumLineCount: 1
+                elide: Text.ElideRight
+                maximumLineCount: 1
                 color: Colours.palette.m3onSurfaceVariant
                 font: Tokens.font.body.small
 
@@ -421,7 +406,6 @@ StyledRect {
                 }
             }
 
-
             StyledText {
                 id: body
 
@@ -432,7 +416,7 @@ StyledRect {
 
                 animate: true
                 textFormat: Text.StyledText
-                text: Sanitizer.cleanNotificationBody(root.modelData.body)
+                text: root.modelData.bodyStyled
                 color: Colours.palette.m3onSurfaceVariant
                 font: Tokens.font.body.small
                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
